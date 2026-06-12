@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}GSU CS Grad Portal{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body>
+    <header class="topbar" id="topbar">
+      <a class="brand" href="{{ url_for('index') }}">
+        <img class="brand-logo" src="{{ url_for('static', filename='gsu-logo.png') }}" alt="Georgia State University">
+        <span class="brand-text">CS Graduate Portal</span>
+      </a>
+      <button type="button" class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mainNav" aria-label="Open menu">
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+      </button>
+      <nav class="nav" id="mainNav">
+        {% if g.user %}
+          <a href="{{ url_for('dashboard') }}">Dashboard</a>
+          <a href="{{ url_for('programs') }}">Programs</a>
+          {% if g.user.role == 'student' %}
+            <a href="{{ url_for('faculty_directory') }}">Faculty</a>
+            <a href="{{ url_for('applications') }}">Applications</a>
+          {% endif %}
+          {% if g.user.role in ['teacher', 'admin'] %}
+            <a href="{{ url_for('students') }}">Students</a>
+            <a href="{{ url_for('applicants') }}">Applicants</a>
+          {% endif %}
+          {% if g.user.role == 'admin' %}
+            <a href="{{ url_for('admin_faculty') }}">Faculty Admin</a>
+            <a href="{{ url_for('admin_programs') }}">Programs Admin</a>
+          {% endif %}
+          <div class="alerts-wrap">
+            <button type="button" class="alerts-trigger nav-icon" id="alertsTrigger" aria-expanded="false" aria-controls="alertsPanel">
+              Alerts{% if unread_notifications %}<span class="badge" id="alertsBadge">{{ unread_notifications }}</span>{% endif %}
+            </button>
+            <section class="alerts-panel" id="alertsPanel" hidden>
+              <div class="alerts-panel-head">
+                <strong>Notifications</strong>
+                <div class="alerts-panel-head-actions">
+                  {% if alert_notifications %}
+                    <button type="button" class="link-button" id="alertsClearAll">Clear all</button>
+                  {% endif %}
+                  <button type="button" class="link-button" id="alertsClose">Close</button>
+                </div>
+              </div>
+              <div class="alerts-panel-body">
+                {% if alert_notifications %}
+                  {% for n in alert_notifications %}
+                    <div class="alert-item {{ '' if n.is_read else 'unread' }}" data-notification-id="{{ n.id }}">
+                      <div class="alert-item-main">
+                        {% if n.link %}<a href="{{ n.link }}">{{ n.body }}</a>{% else %}<span>{{ n.body }}</span>{% endif %}
+                        <time>{{ n.created_at }}</time>
+                      </div>
+                      <button type="button" class="alert-dismiss" aria-label="Dismiss notification">&times;</button>
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <p class="muted alerts-empty">No notifications yet.</p>
+                {% endif %}
+              </div>
+            </section>
+          </div>
+          <a href="{{ url_for('profile_edit') }}">Profile</a>
+          <form action="{{ url_for('logout') }}" method="post">
+            <button class="nav-logout" type="submit">Logout</button>
+          </form>
+        {% else %}
+          <a href="{{ url_for('login') }}">Login</a>
+          <a class="button small" href="{{ url_for('register') }}">Register</a>
+        {% endif %}
+      </nav>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <section class="toast-stack" aria-live="polite">
+          {% for category, message in messages %}
+            <p class="toast {{ category }}">{{ message }}</p>
+          {% endfor %}
+        </section>
+      {% endif %}
+    {% endwith %}
+
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+
+    <div class="modal" id="confirmModal" hidden>
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+        <h3 id="confirmModalTitle">Please confirm</h3>
+        <p id="confirmModalMessage"></p>
+        <div class="modal-actions">
+          <button type="button" class="button secondary" id="confirmModalCancel">Cancel</button>
+          <button type="button" class="button" id="confirmModalOk">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="chat-launcher" id="chatLauncher" type="button" aria-label="Open AI admissions assistant">
+      <span class="chat-launcher-icon" aria-hidden="true">AI</span>
+    </button>
+    <section class="chat-panel" id="chatPanel" aria-live="polite">
+      <div class="chat-header">
+        <div class="chat-title">
+          <span class="chat-avatar" aria-hidden="true">AI</span>
+          <div>
+            <strong>GSU Admissions AI Assistant</strong>
+            <span>AI chatbot &middot; verify important details with GSU</span>
+          </div>
+        </div>
+        <button class="icon-button" id="chatClose" type="button" aria-label="Close chat">x</button>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <p class="assistant-msg">Hi! I'm the GSU CS admissions <strong>AI assistant</strong>. Ask about programs, deadlines, funding, or how to apply. For personal questions, email faculty directly from their profiles.</p>
+      </div>
+      <form class="chat-form" id="chatForm">
+        <input id="chatInput" name="message" autocomplete="off" placeholder="Ask the AI a question..." required>
+        <button type="submit">Send</button>
+      </form>
+    </section>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>

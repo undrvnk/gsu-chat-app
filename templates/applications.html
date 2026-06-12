@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Applications | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head"><div><h1>Your applications</h1></div></div>
+
+    {% if missing_docs %}
+      <section class="panel">
+        <h2>Missing documents</h2>
+        <ul>{% for d in missing_docs %}<li>{{ d }}</li>{% endfor %}</ul>
+        <a class="button small" href="{{ url_for('profile_edit') }}">Upload now</a>
+      </section>
+    {% endif %}
+
+    <section class="panel">
+      <h2>Tracked applications</h2>
+      {% if applications %}
+        {% for a in applications %}
+          <div class="app-row">
+            <div>
+              <a href="{{ url_for('program_detail', program_id=a.program_id) }}"><strong>{{ a.program_name }}</strong></a>
+              <span class="muted">{{ a.degree_type }} &middot; deadline {{ a.deadline }}</span>
+            </div>
+            <form method="post" action="{{ url_for('update_application_status', app_id=a.id) }}" class="inline-form">
+              <select name="status" onchange="this.form.submit()">
+                {% for s in statuses %}<option value="{{ s }}" {% if s == a.status %}selected{% endif %}>{{ s }}</option>{% endfor %}
+              </select>
+            </form>
+            <form method="post" action="{{ url_for('delete_application', app_id=a.id) }}">
+              <button class="link-button" type="submit">Remove</button>
+            </form>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted">No applications yet.</p>
+      {% endif %}
+    </section>
+
+    {% if available_programs %}
+      <section class="panel">
+        <h2>Start a new application</h2>
+        <div class="chips">
+          {% for p in available_programs %}
+            <a class="chip-link" href="{{ url_for('program_detail', program_id=p.id) }}">{{ p.name }}</a>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+  </section>
+{% endblock %}

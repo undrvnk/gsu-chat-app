@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head">
+      <div>
+        <span class="role-badge {{ g.user.role }}">{{ 'Faculty' if g.user.role == 'teacher' else g.user.role }}</span>
+        <h1>Hello, {{ g.user.full_name or g.user.username }}</h1>
+        {% if interests %}
+          <div class="chips">
+            {% for i in interests %}<span class="chip-tag">{{ i }}</span>{% endfor %}
+          </div>
+        {% else %}
+          <p class="muted">No research interests yet. <a href="{{ url_for('profile_edit') }}">Add them</a> to improve matching.</p>
+        {% endif %}
+      </div>
+      <a class="button secondary" href="{{ url_for('profile_edit') }}">Edit profile</a>
+    </div>
+
+    {% if g.user.role == 'student' %}
+      <div class="grid-2">
+        <section class="panel">
+          <h2>Recommended faculty</h2>
+          {% if recommended %}
+            {% for r in recommended %}
+              <div class="rec-row">
+                <div>
+                  <a href="{{ url_for('view_profile', user_id=r.user.id) }}"><strong>{{ r.user.full_name }}</strong></a>
+                  <span class="match-pill">{{ r.score }}% match</span>
+                  {% if r.user.accepting_students %}<span class="open-pill">accepting</span>{% endif %}
+                </div>
+                <p class="muted">{{ r.areas | join(', ') }}</p>
+              </div>
+            {% endfor %}
+            <a href="{{ url_for('faculty_directory') }}">Browse all faculty &rarr;</a>
+          {% else %}
+            <p class="muted">Add research interests to see faculty matches.</p>
+          {% endif %}
+        </section>
+
+        <section class="panel">
+          <h2>Application checklist</h2>
+          {% if missing_docs %}
+            <p>Missing documents:</p>
+            <ul>{% for d in missing_docs %}<li>{{ d }}</li>{% endfor %}</ul>
+            <a class="button small" href="{{ url_for('profile_edit') }}">Upload documents</a>
+          {% else %}
+            <p class="muted">All core documents uploaded.</p>
+          {% endif %}
+          <h3>Your applications</h3>
+          {% if applications %}
+            {% for a in applications %}
+              <div class="rec-row">
+                <a href="{{ url_for('program_detail', program_id=a.program_id) }}">{{ a.program_name }}</a>
+                <span class="status-pill status-{{ a.status | replace(' ', '-') | lower }}">{{ a.status }}</span>
+                <p class="muted">Deadline: {{ a.deadline }}</p>
+              </div>
+            {% endfor %}
+            <a href="{{ url_for('applications') }}">Manage applications &rarr;</a>
+          {% else %}
+            <p class="muted">No applications yet. <a href="{{ url_for('programs') }}">Browse programs</a>.</p>
+          {% endif %}
+        </section>
+      </div>
+
+      {% if bookmarks %}
+        <section class="panel">
+          <h2>Bookmarked professors</h2>
+          <div class="chips">
+            {% for b in bookmarks %}
+              <a class="chip-link" href="{{ url_for('view_profile', user_id=b.id) }}">{{ b.full_name }}</a>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+    {% elif g.user.role == 'teacher' %}
+      <div class="grid-2">
+        <section class="panel">
+          <h2>Faculty tools</h2>
+          {% if not g.user.verified %}
+            <p class="flag-inline">Your account is pending admin verification, so students cannot yet find you in the directory.</p>
+          {% endif %}
+          <p>You are advising a pool of <strong>{{ student_count }}</strong> student(s).</p>
+          <p>Accepting students:
+            <strong>{{ 'Yes' if g.user.accepting_students else 'No' }}</strong>
+            (<a href="{{ url_for('profile_edit') }}">change</a>)
+          </p>
+          <a class="button" href="{{ url_for('students') }}">Browse students</a>
+          <a class="button secondary" href="{{ url_for('applicants') }}">Review applicants</a>
+        </section>
+
+        <section class="panel">
+          <h2>Saved students</h2>
+          {% if saved_students %}
+            <div class="chips">
+              {% for s in saved_students %}
+                <a class="chip-link" href="{{ url_for('view_profile', user_id=s.id) }}">{{ s.full_name }}</a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="muted">No saved students yet.</p>
+          {% endif %}
+          <h3>Recent notes</h3>
+          {% if my_notes %}
+            {% for n in my_notes %}
+              <div class="rec-row">
+                <a href="{{ url_for('view_profile', user_id=n.student_id) }}">{{ n.student_name }}</a>
+                <p class="muted pre">{{ n.body }}</p>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="muted">No notes written yet.</p>
+          {% endif %}
+        </section>
+      </div>
+
+    {% elif g.user.role == 'admin' %}
+      <div class="students-grid">
+        <article class="student-card"><h3>{{ counts.students }}</h3><p>Students</p></article>
+        <article class="student-card"><h3>{{ counts.faculty }}</h3><p>Faculty</p></article>
+        <article class="student-card"><h3>{{ counts.unverified }}</h3><p>Faculty awaiting verification</p></article>
+        <article class="student-card"><h3>{{ counts.programs }}</h3><p>Programs</p></article>
+      </div>
+      <section class="panel">
+        <h2>Admin tools</h2>
+        <a class="button" href="{{ url_for('admin_faculty') }}">Manage faculty</a>
+        <a class="button secondary" href="{{ url_for('admin_programs') }}">Manage programs</a>
+      </section>
+    {% endif %}
+  </section>
+{% endblock %}

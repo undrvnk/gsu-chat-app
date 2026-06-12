@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Programs | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head">
+      <div><h1>Graduate programs</h1></div>
+    </div>
+
+    <form class="filter-bar" method="get">
+      <select name="area" onchange="this.form.submit()">
+        <option value="">All research areas</option>
+        {% for a in research_areas %}<option value="{{ a }}" {% if a == selected_area %}selected{% endif %}>{{ a }}</option>{% endfor %}
+      </select>
+      <select name="degree" onchange="this.form.submit()">
+        <option value="">All degrees</option>
+        {% for d in degree_types %}<option value="{{ d }}" {% if d == selected_degree %}selected{% endif %}>{{ d }}</option>{% endfor %}
+      </select>
+      <select name="funding" onchange="this.form.submit()">
+        <option value="">Any funding</option>
+        <option value="1" {% if selected_funding == '1' %}selected{% endif %}>Funding available</option>
+      </select>
+      <noscript><button type="submit">Filter</button></noscript>
+      <span class="muted">{{ programs|length }} program(s)</span>
+    </form>
+
+    <div class="students-grid">
+      {% for p in programs %}
+        <article class="student-card">
+          <h3><a href="{{ url_for('program_detail', program_id=p.id) }}">{{ p.name }}</a></h3>
+          <p class="major-tag">{{ p.degree_type }}{% if p.funding_available %} &middot; funding available{% endif %}</p>
+          <p>{{ p.description }}</p>
+          <p class="muted">Deadlines: {{ p.deadline }}</p>
+        </article>
+      {% else %}
+        <article class="student-card"><p class="muted">No programs match those filters.</p></article>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,26 @@
+# Production service for the GSU CS Grad Portal.
+#
+# Install (once on the server):
+#   sudo cp deploy/gsu-chat-app.service /etc/systemd/system/
+#   sudo sed -i "s|/home/jason/gsu-chat-app|$(pwd)|" /etc/systemd/system/gsu-chat-app.service
+#   sudo sed -i "s/User=jason/User=$USER/" /etc/systemd/system/gsu-chat-app.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now gsu-chat-app
+#
+# The app reads PORT and other settings from .env in the project root.
+
+[Unit]
+Description=GSU CS Grad Portal (Flask)
+After=network.target
+
+[Service]
+Type=simple
+User=jason
+WorkingDirectory=/home/jason/gsu-chat-app
+EnvironmentFile=-/home/jason/gsu-chat-app/.env
+ExecStart=/usr/bin/python3 /home/jason/gsu-chat-app/app.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

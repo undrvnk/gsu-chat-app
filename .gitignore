@@ -1,0 +1,8 @@
+# Secrets and local config
+.env
+
+# Runtime / build artifacts
+instance/
+server.log
+__pycache__/
+*.pyc

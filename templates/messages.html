@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Messages | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head"><div><h1>Messages</h1></div></div>
+    <section class="panel">
+      {% if partners %}
+        {% for p in partners %}
+          <a class="thread-row" href="{{ url_for('message_thread', user_id=p.id) }}">
+            <div>
+              <strong>{{ p.full_name or p.username }}</strong>
+              <span class="muted">{{ 'Faculty' if p.role == 'teacher' else p.role }}</span>
+            </div>
+            <div>
+              {% if p.unread %}<span class="badge">{{ p.unread }}</span>{% endif %}
+              <time>{{ p.last_at }}</time>
+            </div>
+          </a>
+        {% endfor %}
+      {% else %}
+        <p class="muted">No conversations yet. Open a profile and click Message to start one.</p>
+      {% endif %}
+    </section>
+  </section>
+{% endblock %}

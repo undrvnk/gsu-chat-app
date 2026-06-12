@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Register | GSU CS Grad Chat{% endblock %}
+{% block content %}
+  <section class="auth-shell">
+    <form class="auth-card" method="post">
+      <h1>Create Account</h1>
+      <label>
+        Full name
+        <input name="full_name" autocomplete="name" required>
+      </label>
+      <label>
+        Username
+        <input name="username" autocomplete="username" required>
+      </label>
+      <label>
+        Email
+        <input name="email" type="email" autocomplete="email" required>
+      </label>
+      <label>
+        I am a
+        <select name="role" id="roleSelect">
+          <option value="student" selected>Student</option>
+          <option value="teacher">Faculty</option>
+        </select>
+      </label>
+      <label id="majorField">
+        Major
+        <select name="major">
+          {% for m in majors %}
+            <option value="{{ m }}">{{ m }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        Password
+        <input name="password" type="password" autocomplete="new-password" minlength="8" required>
+      </label>
+      <button type="submit">Register</button>
+      <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+    </form>
+  </section>
+  <script>
+    const roleSelect = document.getElementById("roleSelect");
+    const majorField = document.getElementById("majorField");
+    function syncMajor() {
+      majorField.style.display = roleSelect.value === "teacher" ? "none" : "grid";
+    }
+    roleSelect.addEventListener("change", syncMajor);
+    syncMajor();
+  </script>
+{% endblock %}

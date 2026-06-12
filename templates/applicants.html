@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Applicants | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head">
+      <div>
+        <span class="role-badge teacher">Faculty</span>
+        <h1>Applicant review</h1>
+        <p class="muted">Review applications and admit or reject candidates.</p>
+      </div>
+    </div>
+
+    <section class="panel">
+      {% if applications %}
+        <div class="table-wrap">
+          <table class="data-table data-table-responsive">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Programs</th>
+                <th>Major</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in applications %}
+                <tr>
+                  <td data-label="Name">
+                    <a href="{{ url_for('view_profile', user_id=a.student_id) }}"><strong>{{ a.student_name }}</strong></a>
+                    <span class="table-sub muted">{{ a.student_email }}</span>
+                  </td>
+                  <td data-label="Programs">{{ a.program_name }}</td>
+                  <td data-label="Major">{{ a.major or '—' }}{% if a.gpa %} <span class="muted">· GPA {{ a.gpa }}</span>{% endif %}</td>
+                  <td data-label="Status">
+                    <div class="table-status-cell">
+                      <span class="status-pill status-{{ a.status | replace(' ', '-') | lower }}">{{ a.status }}</span>
+                      {% if a.status not in ['Admitted', 'Rejected'] %}
+                        <div class="table-actions">
+                          <form method="post" action="{{ url_for('review_application', app_id=a.id) }}" class="confirm-form"
+                                data-confirm="Admit {{ a.student_name }} to {{ a.program_name }}?">
+                            <input type="hidden" name="status" value="Admitted">
+                            <button class="button small" type="submit">Admit</button>
+                          </form>
+                          <form method="post" action="{{ url_for('review_application', app_id=a.id) }}" class="confirm-form"
+                                data-confirm="Reject {{ a.student_name }} for {{ a.program_name }}?">
+                            <input type="hidden" name="status" value="Rejected">
+                            <button class="button small secondary" type="submit">Reject</button>
+                          </form>
+                        </div>
+                      {% else %}
+                        <form method="post" action="{{ url_for('review_application', app_id=a.id) }}" class="confirm-form"
+                              data-confirm="Undo this {{ a.status | lower }} decision for {{ a.student_name }}?">
+                          <input type="hidden" name="status" value="Under Review">
+                          <button class="link-button" type="submit">Undo decision</button>
+                        </form>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="muted">No applications submitted yet.</p>
+      {% endif %}
+    </section>
+  </section>
+{% endblock %}

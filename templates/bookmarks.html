@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Bookmarks | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head"><div><h1>Saved profiles</h1></div></div>
+    <div class="students-grid">
+      {% for p in people %}
+        <article class="student-card">
+          <h3><a href="{{ url_for('view_profile', user_id=p.id) }}">{{ p.full_name or p.username }}</a></h3>
+          <p class="major-tag">{{ 'Faculty' if p.role == 'teacher' else p.major or 'Student' }}</p>
+          <form method="post" action="{{ url_for('toggle_bookmark', user_id=p.id) }}">
+            <button class="button small secondary" type="submit">Remove</button>
+          </form>
+        </article>
+      {% else %}
+        <article class="student-card"><p class="muted">Nothing saved yet.</p></article>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

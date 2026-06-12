@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Chatbot Moderation | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head">
+      <div>
+        <span class="role-badge admin">Admin</span>
+        <h1>Chatbot moderation</h1>
+      </div>
+    </div>
+
+    <section class="panel">
+      <h2>Corrections / authoritative facts</h2>
+      <p class="muted">These are injected into the AI's knowledge and override conflicting info.</p>
+      <form method="post">
+        <label>Add a correction
+          <textarea name="content" rows="2" placeholder="e.g. The MS CS application fee is $50 for domestic applicants." required></textarea>
+        </label>
+        <button type="submit">Add correction</button>
+      </form>
+      {% for c in corrections %}
+        <div class="app-row">
+          <p class="pre">{{ c.content }}</p>
+          <form method="post" action="{{ url_for('admin_delete_correction', correction_id=c.id) }}">
+            <button class="link-button" type="submit">Delete</button>
+          </form>
+        </div>
+      {% else %}
+        <p class="muted">No corrections yet.</p>
+      {% endfor %}
+    </section>
+
+    <section class="panel">
+      <h2>Recent AI responses</h2>
+      <p class="muted">Review and remove any inaccurate answers.</p>
+      {% for c in recent_chats %}
+        <div class="app-row">
+          <div>
+            <p class="pre">{{ c.content }}</p>
+            <time>{{ c.created_at }}{% if c.username %} &middot; to {{ c.username }}{% endif %}</time>
+          </div>
+          <form method="post" action="{{ url_for('admin_delete_chat', message_id=c.id) }}">
+            <button class="link-button" type="submit">Delete</button>
+          </form>
+        </div>
+      {% else %}
+        <p class="muted">No chatbot responses logged yet.</p>
+      {% endfor %}
+    </section>
+  </section>
+{% endblock %}

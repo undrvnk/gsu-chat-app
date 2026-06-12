@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Notifications | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head"><div><h1>Notifications</h1></div></div>
+    <section class="panel">
+      {% if notifications %}
+        {% for n in notifications %}
+          <div class="notif-row {{ 'unread' if not n.is_read else '' }}">
+            {% if n.link %}<a href="{{ n.link }}">{{ n.body }}</a>{% else %}<span>{{ n.body }}</span>{% endif %}
+            <time>{{ n.created_at }}</time>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted">No notifications yet.</p>
+      {% endif %}
+    </section>
+  </section>
+{% endblock %}

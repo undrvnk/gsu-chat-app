@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Students | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head">
+      <div>
+        <span class="role-badge teacher">Faculty</span>
+        <h1>Student directory</h1>
+        <p class="muted">Relevance is matched against your research areas.</p>
+      </div>
+    </div>
+
+    <form class="filter-bar" method="get">
+      <select name="interest" onchange="this.form.submit()">
+        <option value="">All research interests</option>
+        {% for a in research_areas %}<option value="{{ a }}" {% if a == selected_interest %}selected{% endif %}>{{ a }}</option>{% endfor %}
+      </select>
+      <select name="major" onchange="this.form.submit()">
+        <option value="">All majors</option>
+        {% for m in majors %}<option value="{{ m }}" {% if m == selected_major %}selected{% endif %}>{{ m }}</option>{% endfor %}
+      </select>
+      <select name="sort" onchange="this.form.submit()">
+        <option value="name" {% if sort == 'name' %}selected{% endif %}>Sort: Name</option>
+        <option value="relevance" {% if sort == 'relevance' %}selected{% endif %}>Sort: Relevance</option>
+        <option value="gpa" {% if sort == 'gpa' %}selected{% endif %}>Sort: GPA</option>
+      </select>
+      <span class="muted">{{ cards|length }} student(s)</span>
+    </form>
+
+    <div class="students-grid">
+      {% for c in cards %}
+        <article class="student-card">
+          <h3><a href="{{ url_for('view_profile', user_id=c.user.id) }}">{{ c.user.full_name or c.user.username }}</a></h3>
+          <p class="major-tag">{{ c.user.major or 'Undeclared' }}</p>
+          <p>
+            <span class="match-pill">{{ c.score }}% match</span>
+            {% if c.user.gpa %}<span class="muted">GPA {{ c.user.gpa }}</span>{% endif %}
+          </p>
+          {% if c.interests %}<p class="muted">{{ c.interests | join(', ') }}</p>{% endif %}
+          <form method="post" action="{{ url_for('toggle_bookmark', user_id=c.user.id) }}">
+            <button class="button small secondary" type="submit">{{ 'Saved' if c.saved else 'Save profile' }}</button>
+          </form>
+        </article>
+      {% else %}
+        <article class="student-card"><p class="muted">No students match those filters.</p></article>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

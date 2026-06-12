@@ -1,0 +1,61 @@
+# Continuous Deployment: ship main to the server after tests pass.
+#
+# Enable by setting repository variable DEPLOY_ENABLED=true and these secrets:
+#   DEPLOY_HOST     — server hostname or IP reachable from GitHub Actions
+#   DEPLOY_USER     — SSH user (e.g. jason)
+#   DEPLOY_SSH_KEY  — private key for that user
+#   DEPLOY_PATH     — absolute path to the app on the server (e.g. /home/jason/gsu-chat-app)
+#
+# If the server is on a private network (e.g. 192.168.x.x), use a self-hosted
+# runner on that machine instead: change runs-on below to [self-hosted, gsu-chat-app]
+# and remove the SSH step.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run smoke tests
+        run: python smoke_test.py
+
+  deploy:
+    needs: test
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/deploy_key \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "cd '${DEPLOY_PATH}' && git fetch origin main && git checkout main && git pull --ff-only origin main && bash scripts/deploy.sh"

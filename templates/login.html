@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Login | GSU CS Grad Chat{% endblock %}
+{% block content %}
+  <section class="auth-shell">
+    <form class="auth-card" method="post">
+      <h1>Login</h1>
+      <label>
+        Username or email
+        <input name="identifier" autocomplete="username" required>
+      </label>
+      <label>
+        Password
+        <input name="password" type="password" autocomplete="current-password" required>
+      </label>
+      <button type="submit">Login</button>
+      <p>Need an account? <a href="{{ url_for('register') }}">Register</a></p>
+    </form>
+  </section>
+{% endblock %}

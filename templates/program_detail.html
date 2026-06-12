@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ program.name }} | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head">
+      <div>
+        <span class="role-badge student">{{ program.degree_type }}</span>
+        <h1>{{ program.name }}</h1>
+        {% if program.funding_available %}<span class="open-pill">Funding available</span>{% endif %}
+      </div>
+      {% if g.user.role == 'student' %}
+        {% if applied %}
+          <span class="status-pill status-{{ applied.status | replace(' ', '-') | lower }}">Application: {{ applied.status }}</span>
+        {% else %}
+          <form method="post" action="{{ url_for('apply_program', program_id=program.id) }}">
+            <button type="submit">Start application</button>
+          </form>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <div class="grid-2">
+      <section class="panel">
+        <h2>Overview</h2>
+        <p>{{ program.description }}</p>
+        <p class="muted">Deadlines: {{ program.deadline }}</p>
+        {% if program.url %}<p><a href="{{ program.url }}" target="_blank" rel="noopener">Official program page</a></p>{% endif %}
+        <h3>Research areas</h3>
+        <div class="chips">{% for a in areas %}<span class="chip-tag">{{ a }}</span>{% endfor %}</div>
+      </section>
+
+      <section class="panel">
+        <h2>Associated faculty</h2>
+        {% if faculty %}
+          {% for f in faculty %}
+            <div class="rec-row">
+              <a href="{{ url_for('view_profile', user_id=f.id) }}"><strong>{{ f.full_name }}</strong></a>
+              {% if f.accepting_students %}<span class="open-pill">accepting</span>{% endif %}
+              {% if f.title %}<p class="muted">{{ f.title }}</p>{% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="muted">No faculty linked to this program yet.</p>
+        {% endif %}
+      </section>
+    </div>
+  </section>
+{% endblock %}

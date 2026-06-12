@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Chat with {{ other.full_name or other.username }} | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head">
+      <div>
+        <h1>{{ other.full_name or other.username }}</h1>
+        <a class="muted" href="{{ url_for('view_profile', user_id=other.id) }}">View profile</a>
+      </div>
+      <a class="button secondary" href="{{ url_for('messages_inbox') }}">All messages</a>
+    </div>
+
+    <section class="panel">
+      <div class="thread">
+        {% for m in thread %}
+          <div class="msg {{ 'mine' if m.sender_id == g.user.id else 'theirs' }}">
+            <p class="pre">{{ m.body }}</p>
+            <time>{{ m.created_at }}</time>
+          </div>
+        {% else %}
+          <p class="muted">No messages yet. Say hello.</p>
+        {% endfor %}
+      </div>
+      <form method="post" class="chat-form-inline">
+        <textarea name="body" rows="2" placeholder="Write a message..." required></textarea>
+        <button type="submit">Send</button>
+      </form>
+    </section>
+  </section>
+{% endblock %}

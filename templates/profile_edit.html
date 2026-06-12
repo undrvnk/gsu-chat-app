@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Edit Profile | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head">
+      <div>
+        <span class="role-badge {{ g.user.role }}">{{ 'Faculty' if g.user.role == 'teacher' else g.user.role }}</span>
+        <h1>Edit your profile</h1>
+      </div>
+      <a class="button secondary" href="{{ url_for('view_profile', user_id=g.user.id) }}">View public profile</a>
+    </div>
+
+    <section class="panel">
+      <form method="post">
+        <label>
+          Full name
+          <input name="full_name" value="{{ g.user.full_name }}">
+        </label>
+        <label>
+          Email <span class="muted">(visible on your public profile)</span>
+          <input name="email" type="email" value="{{ g.user.email }}" required>
+        </label>
+        <label>
+          Bio
+          <textarea name="bio" rows="3" placeholder="A short summary about you">{{ g.user.bio }}</textarea>
+        </label>
+
+        {% if g.user.role == 'student' %}
+          <div class="grid-2">
+            <label>
+              Major / intended major
+              <select name="major">
+                {% for m in majors %}
+                  <option value="{{ m }}" {% if m == g.user.major %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              GPA
+              <input name="gpa" value="{{ g.user.gpa }}" placeholder="e.g. 3.7">
+            </label>
+            <label>
+              Prior degree
+              <input name="prior_degree" value="{{ g.user.prior_degree }}" placeholder="e.g. B.S. Computer Science">
+            </label>
+            <label>
+              Prior institution
+              <input name="prior_institution" value="{{ g.user.prior_institution }}">
+            </label>
+          </div>
+          <label>
+            Test scores (GRE / TOEFL / IELTS)
+            <input name="test_scores" value="{{ g.user.test_scores }}" placeholder="e.g. GRE 320, TOEFL 105">
+          </label>
+        {% elif g.user.role == 'teacher' %}
+          <div class="grid-2">
+            <label>
+              Title
+              <input name="title" value="{{ g.user.title }}" placeholder="e.g. Associate Professor">
+            </label>
+            <label>
+              Lab / website URL
+              <input name="lab_url" value="{{ g.user.lab_url }}" placeholder="https://...">
+            </label>
+            <label>
+              Publications URL
+              <input name="publications_url" value="{{ g.user.publications_url }}" placeholder="https://...">
+            </label>
+          </div>
+          <label class="checkbox-row">
+            <input type="checkbox" name="accepting_students" {% if g.user.accepting_students %}checked{% endif %}>
+            I am currently accepting graduate students
+          </label>
+        {% endif %}
+
+        <fieldset class="interests">
+          <legend>{{ 'Research areas' if g.user.role == 'teacher' else 'Research interests' }}</legend>
+          <div class="checkbox-grid">
+            {% for area in research_areas %}
+              <label class="checkbox-chip">
+                <input type="checkbox" name="interests" value="{{ area }}" {% if area in user_interests %}checked{% endif %}>
+                <span>{{ area }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        <button type="submit">Save profile</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Application documents</h2>
+      <p class="muted">Allowed: pdf, doc, docx, txt, rtf, odt (max 8 MB).</p>
+      {% for dt in doc_types %}
+        <div class="doc-row">
+          <div>
+            <strong>{{ doc_labels[dt] }}</strong>
+            {% if documents.get(dt) %}
+              <a href="{{ url_for('download_document', doc_id=documents[dt].id) }}">{{ documents[dt].original_name }}</a>
+              <span class="open-pill">uploaded</span>
+            {% else %}
+              <span class="muted">not uploaded</span>
+            {% endif %}
+          </div>
+          <form method="post" action="{{ url_for('upload_document') }}" enctype="multipart/form-data" class="inline-form">
+            <input type="hidden" name="doc_type" value="{{ dt }}">
+            <input type="file" name="file" required>
+            <button class="button small" type="submit">Upload</button>
+          </form>
+        </div>
+      {% endfor %}
+    </section>
+  </section>
+{% endblock %}

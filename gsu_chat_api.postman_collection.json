@@ -1,0 +1,136 @@
+{
+  "info": {
+    "name": "GSU Chat App API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/health"
+      }
+    },
+    {
+      "name": "API Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"identifier\":\"admin\",\"password\":\"AdminPass123!\"}"
+        },
+        "url": "{{base_url}}/api/login"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const data = pm.response.json();",
+              "if (data.token) pm.collectionVariables.set('token', data.token);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Login Web Session",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "identifier",
+              "value": "admin"
+            },
+            {
+              "key": "password",
+              "value": "AdminPass123!"
+            }
+          ]
+        },
+        "url": "{{base_url}}/login"
+      }
+    },
+    {
+      "name": "All Users",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/users",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Search Users",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/users?search=student",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Particular User",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/users/1",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Chat",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"message\":\"What GSU CS graduate programs are available?\"}"
+        },
+        "url": "{{base_url}}/api/chat"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://192.168.1.165:5000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}

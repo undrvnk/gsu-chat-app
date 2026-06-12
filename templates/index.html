@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="hero">
+    <div class="hero-content">
+      <img class="hero-logo" src="{{ url_for('static', filename='gsu-logo.png') }}" alt="Georgia State University">
+      <p class="eyebrow">Georgia State University &middot; Department of Computer Science</p>
+      <h1>Graduate admissions portal</h1>
+      <p>
+        Build your profile, discover programs and faculty matched to your research
+        interests, track your application, ask the AI admissions assistant, and
+        connect with advisors by email.
+      </p>
+      <div class="actions">
+        {% if g.user %}
+          <a class="button" href="{{ url_for('dashboard') }}">Open Dashboard</a>
+        {% else %}
+          <a class="button" href="{{ url_for('register') }}">Create Account</a>
+          <a class="button secondary" href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="program-strip">
+    {% for p in programs %}
+      <article>
+        <h2>{{ p.name }}</h2>
+        <p>{{ p.description }}</p>
+      </article>
+    {% else %}
+      <article><h2>M.S. Computer Science</h2><p>Flexible graduate study in computing.</p></article>
+      <article><h2>Ph.D. Computer Science</h2><p>Research across CS, data science, and security.</p></article>
+      <article><h2>Gateway Certificate</h2><p>A bridge path for non-CS backgrounds.</p></article>
+    {% endfor %}
+  </section>
+{% endblock %}

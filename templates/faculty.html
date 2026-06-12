@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Faculty | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head">
+      <div>
+        <h1>Faculty directory</h1>
+        {% if g.user.role == 'student' %}<p class="muted">Sorted by how well their research matches your interests.</p>{% endif %}
+      </div>
+    </div>
+
+    <form class="filter-bar" method="get">
+      <select name="area" onchange="this.form.submit()">
+        <option value="">All research areas</option>
+        {% for a in research_areas %}<option value="{{ a }}" {% if a == selected_area %}selected{% endif %}>{{ a }}</option>{% endfor %}
+      </select>
+      <select name="accepting" onchange="this.form.submit()">
+        <option value="">All faculty</option>
+        <option value="1" {% if selected_accepting == '1' %}selected{% endif %}>Accepting students</option>
+      </select>
+      <noscript><button type="submit">Filter</button></noscript>
+      <span class="muted">{{ cards|length }} faculty</span>
+    </form>
+
+    <div class="students-grid">
+      {% for c in cards %}
+        <article class="student-card">
+          <h3><a href="{{ url_for('view_profile', user_id=c.user.id) }}">{{ c.user.full_name }}</a></h3>
+          {% if c.user.title %}<p class="major-tag">{{ c.user.title }}</p>{% endif %}
+          <p>
+            {% if c.user.accepting_students %}<span class="open-pill">accepting</span>{% endif %}
+            {% if g.user.role == 'student' %}<span class="match-pill">{{ c.score }}% match</span>{% endif %}
+          </p>
+          {% if c.areas %}<p class="muted">{{ c.areas | join(', ') }}</p>{% endif %}
+          <form method="post" action="{{ url_for('toggle_bookmark', user_id=c.user.id) }}">
+            <button class="button small secondary" type="submit">{{ 'Bookmarked' if c.bookmarked else 'Bookmark' }}</button>
+          </form>
+        </article>
+      {% else %}
+        <article class="student-card"><p class="muted">No faculty match those filters.</p></article>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

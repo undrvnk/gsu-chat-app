@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Programs Admin | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head">
+      <div>
+        <span class="role-badge admin">Admin</span>
+        <h1>Manage programs</h1>
+      </div>
+    </div>
+
+    <section class="panel">
+      <h2>Add a program</h2>
+      <form method="post">
+        <div class="grid-2">
+          <label>Name<input name="name" required></label>
+          <label>Degree type
+            <select name="degree_type">{% for d in degree_types %}<option value="{{ d }}">{{ d }}</option>{% endfor %}</select>
+          </label>
+          <label>Deadline<input name="deadline" placeholder="e.g. Fall: July 15"></label>
+          <label>Official URL<input name="url" placeholder="https://..."></label>
+        </div>
+        <label>Description<textarea name="description" rows="2"></textarea></label>
+        <label class="checkbox-row"><input type="checkbox" name="funding_available"> Funding available</label>
+        <fieldset class="interests">
+          <legend>Research areas</legend>
+          <div class="checkbox-grid">
+            {% for a in research_areas %}
+              <label class="checkbox-chip"><input type="checkbox" name="areas" value="{{ a }}"><span>{{ a }}</span></label>
+            {% endfor %}
+          </div>
+        </fieldset>
+        <button type="submit">Create program</button>
+      </form>
+    </section>
+
+    {% for p in programs %}
+      <section class="panel">
+        <div class="dashboard-head">
+          <div><h2>{{ p.name }}</h2><p class="muted">{{ p.degree_type }}</p></div>
+          <form method="post" action="{{ url_for('admin_delete_program', program_id=p.id) }}">
+            <button class="link-button" type="submit">Delete</button>
+          </form>
+        </div>
+        <form method="post" action="{{ url_for('admin_edit_program', program_id=p.id) }}">
+          <div class="grid-2">
+            <label>Degree type
+              <select name="degree_type">{% for d in degree_types %}<option value="{{ d }}" {% if d == p.degree_type %}selected{% endif %}>{{ d }}</option>{% endfor %}</select>
+            </label>
+            <label>Deadline<input name="deadline" value="{{ p.deadline }}"></label>
+            <label>Official URL<input name="url" value="{{ p.url }}"></label>
+          </div>
+          <label>Description<textarea name="description" rows="2">{{ p.description }}</textarea></label>
+          <label class="checkbox-row"><input type="checkbox" name="funding_available" {% if p.funding_available %}checked{% endif %}> Funding available</label>
+          <fieldset class="interests">
+            <legend>Research areas</legend>
+            <div class="checkbox-grid">
+              {% for a in research_areas %}
+                <label class="checkbox-chip"><input type="checkbox" name="areas" value="{{ a }}" {% if a in p.research_areas.split(',') %}checked{% endif %}><span>{{ a }}</span></label>
+              {% endfor %}
+            </div>
+          </fieldset>
+          <button class="button small" type="submit">Save changes</button>
+        </form>
+      </section>
+    {% endfor %}
+  </section>
+{% endblock %}

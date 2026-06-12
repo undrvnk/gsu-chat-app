@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}{{ profile.full_name or profile.username }} | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head">
+      <div>
+        <span class="role-badge {{ profile.role }}">{{ 'Faculty' if profile.role == 'teacher' else profile.role }}</span>
+        <h1>{{ profile.full_name or profile.username }}</h1>
+        {% if profile.role == 'teacher' and profile.title %}<p class="muted">{{ profile.title }}</p>{% endif %}
+        {% if profile.role == 'teacher' %}
+          <p>{% if profile.accepting_students %}<span class="open-pill">Accepting students</span>{% else %}<span class="muted">Not currently accepting students</span>{% endif %}</p>
+        {% endif %}
+        {% if my_score is not none %}<span class="match-pill">{{ my_score }}% interest match with you</span>{% endif %}
+      </div>
+      <div class="actions">
+        {% if g.user.id != profile.id %}
+          <form method="post" action="{{ url_for('toggle_bookmark', user_id=profile.id) }}">
+            <button class="button secondary" type="submit">{{ 'Remove bookmark' if bookmarked else 'Bookmark' }}</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <section class="panel">
+        <h2>About</h2>
+        {% if profile.bio %}<p class="pre">{{ profile.bio }}</p>{% else %}<p class="muted">No bio provided.</p>{% endif %}
+
+        <h3>Contact</h3>
+        <p class="contact-email">
+          <a href="mailto:{{ profile.email }}">{{ profile.email }}</a>
+        </p>
+        <p class="muted">Use email for questions about programs, research, or admissions.</p>
+
+        {% if profile_interests %}
+          <h3>{{ 'Research areas' if profile.role == 'teacher' else 'Research interests' }}</h3>
+          <div class="chips">{% for i in profile_interests %}<span class="chip-tag">{{ i }}</span>{% endfor %}</div>
+        {% endif %}
+        {% if profile.role == 'teacher' %}
+          {% if profile.lab_url %}<p><a href="{{ profile.lab_url }}" target="_blank" rel="noopener">Lab / website</a></p>{% endif %}
+          {% if profile.publications_url %}<p><a href="{{ profile.publications_url }}" target="_blank" rel="noopener">Publications</a></p>{% endif %}
+          {% if programs %}
+            <h3>Associated programs</h3>
+            <ul>{% for p in programs %}<li><a href="{{ url_for('program_detail', program_id=p.id) }}">{{ p.name }}</a></li>{% endfor %}</ul>
+          {% endif %}
+        {% endif %}
+        {% if profile.role == 'student' %}
+          <h3>Academic background</h3>
+          <ul class="facts">
+            {% if profile.major %}<li><span>Major</span>{{ profile.major }}</li>{% endif %}
+            {% if profile.gpa %}<li><span>GPA</span>{{ profile.gpa }}</li>{% endif %}
+            {% if profile.prior_degree %}<li><span>Prior degree</span>{{ profile.prior_degree }}</li>{% endif %}
+            {% if profile.prior_institution %}<li><span>Institution</span>{{ profile.prior_institution }}</li>{% endif %}
+            {% if profile.test_scores %}<li><span>Test scores</span>{{ profile.test_scores }}</li>{% endif %}
+          </ul>
+        {% endif %}
+      </section>
+
+      <section class="panel">
+        {% if g.user.role in ['teacher', 'admin'] and profile.role == 'student' %}
+          <h2>Applications</h2>
+          {% if student_applications %}
+            {% for a in student_applications %}
+              <div class="app-row">
+                <div class="app-row-info">
+                  <strong>{{ a.program_name }}</strong>
+                  <span class="status-pill status-{{ a.status | replace(' ', '-') | lower }}">{{ a.status }}</span>
+                </div>
+                {% if a.status not in ['Admitted', 'Rejected'] %}
+                  <div class="app-row-actions">
+                    <form method="post" action="{{ url_for('review_application', app_id=a.id) }}" class="inline-form confirm-form"
+                          data-confirm="Admit {{ profile.full_name or profile.username }} to {{ a.program_name }}?">
+                      <input type="hidden" name="status" value="Admitted">
+                      <button class="button small" type="submit">Admit</button>
+                    </form>
+                    <form method="post" action="{{ url_for('review_application', app_id=a.id) }}" class="inline-form confirm-form"
+                          data-confirm="Reject {{ profile.full_name or profile.username }} for {{ a.program_name }}?">
+                      <input type="hidden" name="status" value="Rejected">
+                      <button class="button small secondary" type="submit">Reject</button>
+                    </form>
+                  </div>
+                {% else %}
+                  <div class="app-row-actions">
+                    <form method="post" action="{{ url_for('review_application', app_id=a.id) }}" class="inline-form confirm-form"
+                          data-confirm="Undo this {{ a.status | lower }} decision and return the application to Under Review?">
+                      <input type="hidden" name="status" value="Under Review">
+                      <button class="link-button" type="submit">Undo decision</button>
+                    </form>
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="muted">No applications on file.</p>
+          {% endif %}
+
+          <h2>Applicant documents</h2>
+          {% if documents %}
+            <ul>
+              {% for dt, doc in documents.items() %}
+                <li>{{ doc_labels[dt] }}: <a href="{{ url_for('download_document', doc_id=doc.id) }}">{{ doc.original_name }}</a></li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="muted">No documents uploaded.</p>
+          {% endif %}
+
+          <h2>Faculty notes</h2>
+          {% for n in notes %}
+            <div class="rec-row note-row {% if g.user.role == 'admin' or n.faculty_id == g.user.id %}note-editable{% endif %}">
+              <div class="note-head">
+                <div class="note-head-info">
+                  <strong>{{ n.author }}</strong>
+                  <time>{{ n.created_at }}</time>
+                </div>
+                {% if g.user.role == 'admin' or n.faculty_id == g.user.id %}
+                  <div class="note-hover-actions">
+                    <button type="button" class="link-button note-edit-toggle">Edit</button>
+                    <form method="post" action="{{ url_for('delete_note', note_id=n.id) }}" class="confirm-form"
+                          data-confirm="Delete this note?">
+                      <button class="link-button" type="submit">Delete</button>
+                    </form>
+                  </div>
+                {% endif %}
+              </div>
+              {% if g.user.role == 'admin' or n.faculty_id == g.user.id %}
+                <div class="note-display">
+                  <p class="note-text pre">{{ n.body }}</p>
+                </div>
+                <form method="post" action="{{ url_for('edit_note', note_id=n.id) }}" class="note-edit-form" hidden>
+                  <textarea name="body" rows="2" required>{{ n.body }}</textarea>
+                  <div class="note-actions">
+                    <button class="button small" type="submit">Save</button>
+                    <button type="button" class="link-button note-edit-cancel">Cancel</button>
+                  </div>
+                </form>
+              {% else %}
+                <p class="pre">{{ n.body }}</p>
+              {% endif %}
+            </div>
+          {% else %}
+            <p class="muted">No notes yet.</p>
+          {% endfor %}
+          <form method="post" action="{{ url_for('add_note', student_id=profile.id) }}">
+            <label>Add a note (visible to faculty)
+              <textarea name="body" rows="2" required></textarea>
+            </label>
+            <button class="button small" type="submit">Add note</button>
+          </form>
+        {% else %}
+          <h2>Get in touch</h2>
+          <p>Email {{ profile.full_name or profile.username }} directly with questions about programs or research.</p>
+          <a class="button" href="mailto:{{ profile.email }}">Email {{ profile.full_name or profile.username }}</a>
+        {% endif %}
+      </section>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Faculty Admin | GSU CS Grad Portal{% endblock %}
+{% block content %}
+  <section class="dashboard">
+    <div class="dashboard-head">
+      <div>
+        <span class="role-badge admin">Admin</span>
+        <h1>Manage faculty</h1>
+      </div>
+    </div>
+
+    <section class="panel">
+      <h2>Create a faculty account</h2>
+      <form method="post">
+        <div class="grid-2">
+          <label>Full name<input name="full_name" required></label>
+          <label>Title<input name="title" placeholder="e.g. Associate Professor"></label>
+          <label>Username<input name="username" required></label>
+          <label>Email<input name="email" type="email" required></label>
+          <label>Temporary password<input name="password" type="password" minlength="8" required></label>
+        </div>
+        <button type="submit">Create &amp; verify</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Faculty accounts</h2>
+      {% for f in faculty %}
+        <div class="app-row">
+          <div>
+            <a href="{{ url_for('view_profile', user_id=f.id) }}"><strong>{{ f.full_name or f.username }}</strong></a>
+            <span class="muted">{{ f.email }}</span>
+          </div>
+          <span>{% if f.verified %}<span class="open-pill">verified</span>{% else %}<span class="flag-inline">pending</span>{% endif %}</span>
+          <form method="post" action="{{ url_for('admin_verify_faculty', user_id=f.id) }}">
+            <button class="button small {{ 'secondary' if f.verified else '' }}" type="submit">{{ 'Revoke' if f.verified else 'Verify' }}</button>
+          </form>
+        </div>
+      {% else %}
+        <p class="muted">No faculty accounts yet.</p>
+      {% endfor %}
+    </section>
+  </section>
+{% endblock %}
