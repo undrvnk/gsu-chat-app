@@ -1,24 +1,20 @@
-# Production service for the GSU CS Grad Portal.
+# Production service: gunicorn behind nginx (nginx serves port 80).
 #
-# Install (once on the server):
-#   sudo cp deploy/gsu-chat-app.service /etc/systemd/system/
-#   sudo sed -i "s|/home/jason/gsu-chat-app|$(pwd)|" /etc/systemd/system/gsu-chat-app.service
-#   sudo sed -i "s/User=jason/User=$USER/" /etc/systemd/system/gsu-chat-app.service
-#   sudo systemctl daemon-reload
-#   sudo systemctl enable --now gsu-chat-app
-#
-# The app reads PORT and other settings from .env in the project root.
+# Install:
+#   bash scripts/setup-nginx.sh
 
 [Unit]
-Description=GSU CS Grad Portal (Flask)
+Description=GSU CS Grad Portal (gunicorn)
 After=network.target
 
 [Service]
 Type=simple
 User=jason
 WorkingDirectory=/home/jason/gsu-chat-app
+Environment=FLASK_DEBUG=0
 EnvironmentFile=-/home/jason/gsu-chat-app/.env
-ExecStart=/usr/bin/python3 /home/jason/gsu-chat-app/app.py
+ExecStartPre=/usr/bin/python3 -c 'import app; app.init_db()'
+ExecStart=/usr/bin/gunicorn --chdir /home/jason/gsu-chat-app --bind 127.0.0.1:8000 --workers 2 --threads 4 --timeout 120 app:app
 Restart=on-failure
 RestartSec=5
 
