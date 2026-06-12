@@ -7,18 +7,15 @@ answers admissions questions.
 
 ## Install
 
-No-root local install already prepared in `vendor/` on this server. If you want a normal system install instead:
+On the server, production uses **nginx** (port 5000) in front of **gunicorn**:
 
 ```bash
 sudo apt update
-sudo apt install -y python3-flask
+sudo apt install -y python3-flask gunicorn nginx
 ```
 
-Or, if your server has pip:
-
-```bash
-python3 -m pip install -r requirements.txt
-```
+A no-root local install is also prepared in `vendor/` for development machines
+without system packages.
 
 ## Initialize and Seed the Database
 
@@ -40,17 +37,64 @@ Seed logins:
 - `leo` / `StudentPass123!` (student, Cybersecurity)
 - `nina` / `StudentPass123!` (student, Computer Science)
 
-## Run on the Server IP
+## Run the App
+
+### Production (server)
+
+Do **not** use `python3 app.py` on the live server. One-time setup:
 
 ```bash
-python3 app.py
+bash scripts/setup-nginx.sh
 ```
 
-Open:
+That installs a **systemd** service (`gsu-chat-app`) running gunicorn, plus nginx
+on port **5000** (matches the existing router port-forward rule).
+
+Day-to-day commands:
+
+```bash
+sudo systemctl status gsu-chat-app    # is it running?
+sudo systemctl restart gsu-chat-app   # after code changes
+sudo systemctl reload nginx
+journalctl -u gsu-chat-app -n 50      # view logs
+```
+
+The app starts automatically on boot.
+
+### Local development
+
+For quick testing on your laptop:
+
+```bash
+FLASK_DEBUG=1 python3 app.py
+```
+
+Open `http://127.0.0.1:5000`.
+
+### Live URLs
 
 ```text
-http://192.168.1.165:5000
+http://70.133.221.153:5000     # public (any network)
+http://192.168.1.165:5000      # local network only (faster at home)
 ```
+
+On your home Wi-Fi, prefer the `192.168...` address. The public IP can be slow
+from inside your own network (router hairpin NAT).
+
+## CI/CD (GitHub Actions)
+
+Pushes and pull requests to `main` run `smoke_test.py` automatically (see
+`.github/workflows/ci.yml`).
+
+```bash
+git add .
+git commit -m "Describe your change"
+git push    # triggers CI on GitHub
+```
+
+Optional auto-deploy is configured in `.github/workflows/deploy.yml` but **off
+by default**. To enable it, set repository variable `DEPLOY_ENABLED=true` and
+add secrets `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_PATH`.
 
 ## LLM Connection (OpenRouter, free models only)
 
@@ -72,7 +116,11 @@ paid model you must explicitly set `ALLOW_PAID_MODELS=1`.
 Drop any `.md` or `.txt` file into the `knowledge/` folder (e.g.
 `knowledge/admissions_qa.md`). Its contents are appended to the chatbot's
 knowledge base on startup. Paste the Q&A pairs from your admissions document
-there and restart the server.
+there and restart:
+
+```bash
+sudo systemctl restart gsu-chat-app
+```
 
 ---
 
@@ -348,4 +396,5 @@ Chat body:
 ```
 
 Import `gsu_chat_api.postman_collection.json` into Postman and set
-`base_url` to `http://192.168.1.165:5000`.
+`base_url` to `http://70.133.221.153:5000` (or `http://192.168.1.165:5000`
+on the local network).
